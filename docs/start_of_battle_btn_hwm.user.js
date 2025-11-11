@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  if (location.pathname !== "/warlog.php") return;
+  if (location.pathname !== "/pl_warlog.php") return;
   const createEl = (el, style, innerText) => {
     let element = document.createElement(el);
     if (style) element.style = style;
