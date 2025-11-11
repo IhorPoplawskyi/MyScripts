@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  if (!location.href.includes("pvp_guild") && !location.href.includes("event") && !location.href.includes("hunt")) return;
 
   const createEl = (el, style, innerText, className, placeholder) => {
     let element = document.createElement(el);
