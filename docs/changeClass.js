@@ -1,1 +1,0 @@
-console.log('This is the changeClass.js file in the docs directory.');
