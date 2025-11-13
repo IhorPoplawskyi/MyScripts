@@ -205,7 +205,7 @@
           acceptRepair();
         } else if (
           !friendsListRepair.includes(charNick) &&
-          percent >= Number(wageRepair | 101)
+          percent >= Number(wageRepair)
         ) {
           acceptRepair();
         } else {
