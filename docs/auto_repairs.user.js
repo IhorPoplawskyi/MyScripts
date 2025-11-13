@@ -105,7 +105,7 @@
     const wage = createEl(
       "div",
       "height: 30px",
-      `wage: ${wageRepair | 101}`,
+      `wage: ${wageRepair}`,
       "",
       "btn_standard inv_cut_text  btn_txt_hover"
     );
