@@ -28,12 +28,11 @@
   const languages = ["ru", "en", "uk"];
   if (!languages.includes(language)) language = "en";
 
-  const links = ["https://my.lordswm.com", "https://www.heroeswm.ru"];
-  const link = location.href.includes("lordswm") ? links[0] : links[1];
+  const link = location.origin;
 
   const fetch_xml = (el, path) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("get", `${link}/home.php`);
+    xhr.open("get", `${link}/inventory.php`);
     xhr.setRequestHeader("Content-type", "text/html; charset=windows-1251");
     if (xhr.overrideMimeType) {
       xhr.overrideMimeType("text/html; charset=windows-1251");
