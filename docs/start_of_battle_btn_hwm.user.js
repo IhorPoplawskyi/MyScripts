@@ -1,5 +1,7 @@
 (function () {
   "use strict";
+  let origin = location.origin;
+
   if (location.pathname === "/pl_warlog.php") {
     const createEl = (el, style, innerText) => {
       let element = document.createElement(el);
@@ -74,6 +76,7 @@
     for (let i = 0; i < list.length; i++) {
       let listItem = document.createElement("div");
       let copyBtn = createEl("div", "cursor: pointer", "🏴");
+      let battle_chat_btn = createEl("div", "cursor: pointer", "💬");
       copyBtn.addEventListener("click", () => {
         if (copyList.includes(links[i] + "\n")) {
           listItem.style.background = "none";
@@ -92,11 +95,17 @@
         copyBlock.innerHTML = text;
         copiedListCount.innerText = `copied: ${copyList.length}`;
       });
+      battle_chat_btn.addEventListener("click", () => {
+        let a = `${origin}/battlechat.php?warid=`;
+        let warid = links[i].split("warid=")[1];
+        window.open(a + warid, "_blank");
+      });
       let btn = createEl("a", "");
       btn.innerHTML = `<a href=${links[i]} target='_blank'>###</a>`;
       let block = createEl("div", "display: flex; gap: 4px;", "");
       listItem.innerHTML = list[i];
       block.append(copyBtn);
+      block.append(battle_chat_btn);
       block.append(btn);
       block.append(listItem);
       global_elem.append(block);
