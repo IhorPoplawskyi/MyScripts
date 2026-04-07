@@ -37,8 +37,7 @@
     if (e.key === "Enter") {
       likablePrice = Number(likablePriceInput.value);
       localStorage.setItem("likablePriceLS", JSON.stringify(likablePrice));
-      render();
-      if (enableSortT) sortItems();
+      render(); // 🔹 підсвітка по новій введеній ціні
     }
   });
 
@@ -58,7 +57,6 @@
     render();
   });
 
-  // --- Новий чекбокс для сортування
   let enableSort = createEl("input", "", "", "", "checkbox");
   enableSort.checked = enableSortT;
   enableSort.addEventListener("click", () => {
@@ -92,35 +90,19 @@
     let summ = price;
     let str = strength;
     let count = currStrength;
-
-    let best = {
-      price: Math.round(summ / count),
-      str: str,
-      count: count,
-      repairs: 0,
-    };
-
+    let best = { price: Math.round(summ / count), str, count, repairs: 0 };
     for (let i = 1; i < strength; i++) {
       summ += repair;
       count += Math.floor(str * 0.9);
       str--;
       let currentPrice = Math.round(summ / count);
       if (currentPrice < best.price) {
-        best = {
-          price: currentPrice,
-          str,
-          count,
-          repairs: i,
-        };
-      } else {
-        break;
-      }
+        best = { price: currentPrice, str, count, repairs: i };
+      } else break;
     }
-
     return best;
   };
 
-  // --- Price helpers
   const getPrice = (item) => {
     let pricesBlock = [...item.getElementsByTagName("td")].filter(
       (el) => el.firstChild && el.firstChild.tagName == "IMG",
@@ -142,9 +124,7 @@
       let price = getPrice(item);
       let val = Math.round(price / Number(strength[0]));
       pricesForOne.push(val);
-      item.children[2].appendChild(
-        createEl("div", "color:red", `разово ${val}`),
-      );
+      item.children[2].appendChild(createEl("div", "color:red", `раз ${val}`));
     });
   };
 
@@ -159,11 +139,11 @@
       mid.appendChild(createEl("div", "color:green", `багато ${data.price}`));
       mid.appendChild(createEl("div", "", `оптислом 0/${data.str}`));
       mid.appendChild(createEl("div", "", `боїв: ${data.count}`));
-      mid.appendChild(createEl("div", "", `ремонтів: ${data.repairs}`));
+      mid.appendChild(createEl("div", "", `рем: ${data.repairs}`));
     });
   };
 
-  // --- Sorting по багатократній ціні
+  // --- Sorting
   const sortItems = () => {
     if (!enableSortT) return;
     let parent = items[0].parentNode;
@@ -176,7 +156,7 @@
     items = combined.map((c) => c.el);
   };
 
-  // --- Render highlighting
+  // --- Render підсвітки (тільки по likablePrice)
   const render = () => {
     items.forEach((item, i) => {
       if (likablePrice >= pricesForOne[i] && useOnlyForOneT) {
@@ -215,7 +195,7 @@
 
     checkPrice(repair);
     if (enableSortT) sortItems();
-    render();
+    render(); // 🔹 підсвітка по likablePrice після побудови
   };
 
   // --- Start
