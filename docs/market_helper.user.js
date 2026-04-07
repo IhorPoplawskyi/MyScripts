@@ -91,15 +91,53 @@
     let summ = price;
     let str = strength;
     let count = currStrength;
-    let opt = [{ price: Math.round(summ / count), str: str }];
+
+    let opt = [];
+
+    let best = {
+      price: Math.round(summ / count),
+      str: str,
+      count: count,
+      repairs: 0,
+    };
+
+    opt.push({ ...best });
 
     for (let i = 1; i < strength; i++) {
       summ += repair;
       count += Math.floor(str * 0.9);
       str = str - 1;
-      opt.push({ price: Math.round(summ / count), str: str });
+
+      const current = {
+        price: Math.round(summ / count),
+        str: str,
+        count: count,
+        repairs: i,
+      };
+
+      opt.push(current);
+
+      if (current.price < best.price) {
+        best = current;
+      } else {
+        break;
+      }
     }
-    return opt;
+
+    opt = opt.map((o) => ({
+      ...o,
+      bCount: best.count,
+    }));
+
+    return {
+      table: opt,
+      best: {
+        price: best.price,
+        str: best.str,
+        bCount: best.count,
+        repairs: best.repairs,
+      },
+    };
   };
 
   const checkPrice = (repair) => {
@@ -113,23 +151,24 @@
       let price = +pricesBlock[0].nextSibling.innerText.replaceAll(",", "");
       let myPriceDiv = document.createElement("div");
       let myOptiSlomDiv = document.createElement("div");
+      let myCountBattlesDiv = document.createElement("div");
+      let myCountRepairsDiv = document.createElement("div");
       let data = opti(price, repair, +strength[0], +strength[1]);
-      let czb = data.map((el) => el.price);
-      czb = Math.min(...czb);
-      let optiSlom = data.filter((el) => el.price === czb);
-      optiSlom = optiSlom.map((el) => el.str);
-      optiSlom = Math.min(...optiSlom);
-
-      pricesForMult.push(czb);
-      if (likablePrice >= czb && useOnlyForMultT) {
+      pricesForMult.push(data.best.price);
+      if (likablePrice >= data.best.price && useOnlyForMultT) {
         item.style.background = "yellow";
       }
-      myPriceDiv.innerText = `багато ${czb}`;
+      myPriceDiv.innerText = `багато ${data.best.price}`;
       myPriceDiv.style = "color: green";
-      myOptiSlomDiv.innerText = `оптислом 0/${optiSlom}`;
+      myOptiSlomDiv.innerText = `оптислом 0/${data.best.str}`;
+      myCountBattlesDiv.innerText = `боїв: ${data.best.bCount}`;
+      myCountRepairsDiv.innerText = `ремонтів: ${data.best.repairs}`;
+
       let mid = item.children[2];
       mid.appendChild(myPriceDiv);
       mid.appendChild(myOptiSlomDiv);
+      mid.appendChild(myCountBattlesDiv);
+      mid.appendChild(myCountRepairsDiv);
     });
   };
 
