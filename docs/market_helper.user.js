@@ -11,7 +11,7 @@
   };
 
   let items = [...document.querySelectorAll(".wb")];
-  items.shift();
+  items.shift(); // пропускаємо заголовок
 
   let pricesForOne = [];
   let pricesForMult = [];
@@ -19,66 +19,66 @@
   const artsRepairPricesLS = JSON.parse(
     localStorage.getItem("artsRepairPricesLS"),
   );
-  if (artsRepairPricesLS === null)
-    localStorage.setItem("artsRepairPricesLS", JSON.stringify({}));
-  const artsRepairPrices = artsRepairPricesLS;
+  const artsRepairPrices = artsRepairPricesLS || {};
+  let likablePrice = JSON.parse(localStorage.getItem("likablePriceLS") || "0");
+  let useOnlyForOneT = JSON.parse(
+    localStorage.getItem("useOnlyForOneLS") || "false",
+  );
+  let useOnlyForMultT = JSON.parse(
+    localStorage.getItem("useOnlyForMultLS") || "false",
+  );
+  let enableSortT = JSON.parse(localStorage.getItem("enableSortLS") || "false");
 
-  let likablePriceLS = JSON.parse(localStorage.getItem("likablePriceLS"));
-  if (likablePriceLS === null)
-    localStorage.setItem("likablePriceLS", JSON.stringify(0));
-  let likablePrice = likablePriceLS;
-
-  let useOnlyForOneLS = JSON.parse(localStorage.getItem("useOnlyForOneLS"));
-  if (useOnlyForOneLS === null)
-    localStorage.setItem("useOnlyForOneLS", JSON.stringify(false));
-  let useOnlyForOneT = useOnlyForOneLS;
-
-  let useOnlyForMultLS = JSON.parse(localStorage.getItem("useOnlyForMultLS"));
-  if (useOnlyForMultLS === null)
-    localStorage.setItem("useOnlyForMultLS", JSON.stringify(false));
-  let useOnlyForMultT = useOnlyForMultLS;
-
+  // --- UI
   let likablePriceInput = createEl("input");
-  likablePriceInput.value = likablePriceLS;
-  likablePriceInput.style.width = "30px";
-  likablePriceInput.style.height = "19px";
-
+  likablePriceInput.value = likablePrice;
+  likablePriceInput.style.width = "40px";
   likablePriceInput.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
-      localStorage.setItem(
-        "likablePriceLS",
-        JSON.stringify(likablePriceInput.value),
-      );
       likablePrice = Number(likablePriceInput.value);
+      localStorage.setItem("likablePriceLS", JSON.stringify(likablePrice));
       render();
+      if (enableSortT) sortItems();
     }
   });
 
   let useOnlyForOne = createEl("input", "", "", "", "checkbox");
-  useOnlyForOne.checked = useOnlyForOneLS;
+  useOnlyForOne.checked = useOnlyForOneT;
   useOnlyForOne.addEventListener("click", () => {
     useOnlyForOneT = !useOnlyForOneT;
     localStorage.setItem("useOnlyForOneLS", JSON.stringify(useOnlyForOneT));
-    useOnlyForOne.checked = useOnlyForOneT;
     render();
   });
-  let useOnlyForOneLabel = createEl("div", "", "Разово");
 
   let useOnlyForMult = createEl("input", "", "", "", "checkbox");
-  useOnlyForMult.checked = useOnlyForMultLS;
+  useOnlyForMult.checked = useOnlyForMultT;
   useOnlyForMult.addEventListener("click", () => {
     useOnlyForMultT = !useOnlyForMultT;
     localStorage.setItem("useOnlyForMultLS", JSON.stringify(useOnlyForMultT));
-    useOnlyForMult.checked = useOnlyForMultT;
     render();
   });
-  let useOnlyForMultLabel = createEl("div", "", "Багаторазово");
 
-  let operationBlock = createEl("div", "display: flex; text-align: right");
-  operationBlock.appendChild(useOnlyForOneLabel);
-  operationBlock.appendChild(useOnlyForOne);
-  operationBlock.appendChild(useOnlyForMultLabel);
-  operationBlock.appendChild(useOnlyForMult);
+  // --- Новий чекбокс для сортування
+  let enableSort = createEl("input", "", "", "", "checkbox");
+  enableSort.checked = enableSortT;
+  enableSort.addEventListener("click", () => {
+    enableSortT = !enableSortT;
+    localStorage.setItem("enableSortLS", JSON.stringify(enableSortT));
+    if (enableSortT) sortItems();
+  });
+
+  let operationBlock = createEl(
+    "div",
+    "display:flex; gap:6px; align-items:center;",
+  );
+  operationBlock.append(
+    "Разово",
+    useOnlyForOne,
+    "Багато",
+    useOnlyForMult,
+    "Сортувати",
+    enableSort,
+  );
 
   let block = document.getElementsByClassName("wbwhite")[0];
   block = block.getElementsByTagName("tr")[0].lastChild;
@@ -87,12 +87,11 @@
 
   let artInfoLink = items[0].getElementsByTagName("a")[1].href;
 
+  // --- OPTI
   const opti = (price, repair, currStrength, strength) => {
     let summ = price;
     let str = strength;
     let count = currStrength;
-
-    let opt = [];
 
     let best = {
       price: Math.round(summ / count),
@@ -101,139 +100,125 @@
       repairs: 0,
     };
 
-    opt.push({ ...best });
-
     for (let i = 1; i < strength; i++) {
       summ += repair;
       count += Math.floor(str * 0.9);
-      str = str - 1;
-
-      const current = {
-        price: Math.round(summ / count),
-        str: str,
-        count: count,
-        repairs: i,
-      };
-
-      opt.push(current);
-
-      if (current.price < best.price) {
-        best = current;
+      str--;
+      let currentPrice = Math.round(summ / count);
+      if (currentPrice < best.price) {
+        best = {
+          price: currentPrice,
+          str,
+          count,
+          repairs: i,
+        };
       } else {
         break;
       }
     }
 
-    opt = opt.map((o) => ({
-      ...o,
-      bCount: best.count,
-    }));
+    return best;
+  };
 
-    return {
-      table: opt,
-      best: {
-        price: best.price,
-        str: best.str,
-        bCount: best.count,
-        repairs: best.repairs,
-      },
-    };
+  // --- Price helpers
+  const getPrice = (item) => {
+    let pricesBlock = [...item.getElementsByTagName("td")].filter(
+      (el) => el.firstChild && el.firstChild.tagName == "IMG",
+    );
+    return +pricesBlock[0].nextSibling.innerText.replaceAll(",", "");
+  };
+
+  const getStrength = (item) => {
+    let strengths = [
+      ...item.getElementsByClassName("art_durability_hidden"),
+    ][0];
+    return strengths.innerText.split("/");
+  };
+
+  // --- Check prices
+  const checkPriceForOneUse = () => {
+    items.forEach((item, i) => {
+      let strength = getStrength(item);
+      let price = getPrice(item);
+      let val = Math.round(price / Number(strength[0]));
+      pricesForOne.push(val);
+      item.children[2].appendChild(
+        createEl("div", "color:red", `разово ${val}`),
+      );
+    });
   };
 
   const checkPrice = (repair) => {
-    items.forEach((item) => {
-      let strengths = [
-        ...item.getElementsByClassName("art_durability_hidden"),
-      ][0];
-      let strength = strengths.innerText.split("/");
-      let pricesBlock = [...item.getElementsByTagName("td")];
-      pricesBlock = pricesBlock.filter((el) => el.firstChild.tagName == "IMG");
-      let price = +pricesBlock[0].nextSibling.innerText.replaceAll(",", "");
-      let myPriceDiv = document.createElement("div");
-      let myOptiSlomDiv = document.createElement("div");
-      let myCountBattlesDiv = document.createElement("div");
-      let myCountRepairsDiv = document.createElement("div");
+    items.forEach((item, i) => {
+      let strength = getStrength(item);
+      let price = getPrice(item);
       let data = opti(price, repair, +strength[0], +strength[1]);
-      pricesForMult.push(data.best.price);
-      if (likablePrice >= data.best.price && useOnlyForMultT) {
-        item.style.background = "yellow";
-      }
-      myPriceDiv.innerText = `багато ${data.best.price}`;
-      myPriceDiv.style = "color: green";
-      myOptiSlomDiv.innerText = `оптислом 0/${data.best.str}`;
-      myCountBattlesDiv.innerText = `боїв: ${data.best.bCount}`;
-      myCountRepairsDiv.innerText = `ремонтів: ${data.best.repairs}`;
+      pricesForMult.push(data.price);
 
       let mid = item.children[2];
-      mid.appendChild(myPriceDiv);
-      mid.appendChild(myOptiSlomDiv);
-      mid.appendChild(myCountBattlesDiv);
-      mid.appendChild(myCountRepairsDiv);
+      mid.appendChild(createEl("div", "color:green", `багато ${data.price}`));
+      mid.appendChild(createEl("div", "", `оптислом 0/${data.str}`));
+      mid.appendChild(createEl("div", "", `боїв: ${data.count}`));
+      mid.appendChild(createEl("div", "", `ремонтів: ${data.repairs}`));
     });
   };
 
-  const checkPriceForOneUse = () => {
-    items.forEach((item) => {
-      let strengths = [
-        ...item.getElementsByClassName("art_durability_hidden"),
-      ][0];
-      let strength = strengths.innerText.split("/");
-      let pricesBlock = [...item.getElementsByTagName("td")];
-      pricesBlock = pricesBlock.filter((el) => el.firstChild.tagName == "IMG");
-      let price = +pricesBlock[0].nextSibling.innerText.replaceAll(",", "");
-      let myPriceDiv = document.createElement("div");
-      let czb = Math.round(price / Number(strength[0]));
-      pricesForOne.push(czb);
-      myPriceDiv.innerText = `разовий ${czb}`;
-      myPriceDiv.style = "color: red";
-      if (likablePrice >= czb && useOnlyForOneT) {
+  // --- Sorting по багатократній ціні
+  const sortItems = () => {
+    if (!enableSortT) return;
+    let parent = items[0].parentNode;
+    let combined = items.map((item, i) => ({
+      el: item,
+      mult: pricesForMult[i] ?? Infinity,
+    }));
+    combined.sort((a, b) => a.mult - b.mult);
+    combined.forEach((obj) => parent.appendChild(obj.el));
+    items = combined.map((c) => c.el);
+  };
+
+  // --- Render highlighting
+  const render = () => {
+    items.forEach((item, i) => {
+      if (likablePrice >= pricesForOne[i] && useOnlyForOneT) {
         item.style.background = "yellow";
+      } else if (likablePrice >= pricesForMult[i] && useOnlyForMultT) {
+        item.style.background = "yellow";
+      } else {
+        item.style.background = "";
       }
-      let mid = item.children[2];
-      mid.appendChild(myPriceDiv);
     });
   };
-  checkPriceForOneUse();
 
-  const url = new URL(location.href);
-  const artType = url.searchParams.get("art_type");
-
-  const addArtToData = (artType, price) => {
-    artsRepairPrices[artType] = price;
-    localStorage.setItem(
-      "artsRepairPricesLS",
-      JSON.stringify(artsRepairPrices),
-    );
-  };
-
+  // --- Fetch repair prices & init
   const fetchMy = async () => {
+    const url = new URL(location.href);
+    const artType = url.searchParams.get("art_type");
+
+    let repair;
     if (artsRepairPrices[artType]) {
-      checkPrice(artsRepairPrices[artType]);
+      repair = artsRepairPrices[artType];
     } else {
       let res = await fetch(artInfoLink);
       let text = await res.text();
-      let repair = Number(
+      repair = Number(
         text
           .match(/<td>\d+,?\d+<\/td>/gi)[0]
-          .match(/\d+,?\d+/gi)[0]
+          .match(/\d+,?\d+/)[0]
           .replace(",", ""),
       );
-      checkPrice(repair);
-      addArtToData(artType, repair);
+      artsRepairPrices[artType] = repair;
+      localStorage.setItem(
+        "artsRepairPricesLS",
+        JSON.stringify(artsRepairPrices),
+      );
     }
+
+    checkPrice(repair);
+    if (enableSortT) sortItems();
+    render();
   };
 
-  const render = () => {
-    for (let i = 0; i < pricesForOne.length; i++) {
-      if (likablePrice >= pricesForOne[i] && useOnlyForOneT) {
-        items[i].style.background = "yellow";
-      } else if (likablePrice >= pricesForMult[i] && useOnlyForMultT) {
-        items[i].style.background = "yellow";
-      } else {
-        items[i].style.background = "";
-      }
-    }
-  };
-
+  // --- Start
+  checkPriceForOneUse();
   fetchMy();
 })();
