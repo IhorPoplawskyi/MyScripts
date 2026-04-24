@@ -218,15 +218,15 @@
     let parentTable = document.getElementsByTagName("table")[1];
     let container = createEl(
       "div",
-      "display: flex; justify-content: center; width: 970px; text-align: center;"
+      "display: flex; justify-content: center; width: 970px; text-align: center;",
     );
     let panel = createEl(
       "div",
-      "display: flex; flex-direction: column; width: 200px;"
+      "display: flex; flex-direction: column; width: 200px;",
     );
     let selectedElements = createEl(
       "div",
-      "display: flex; flex-direction: column; width: 400px;"
+      "display: flex; flex-direction: column; width: 400px;",
     );
     selectedElements.id = "selectedElements";
 
@@ -274,7 +274,7 @@
         `${[...selectType.options]
           .filter((el) => el.selected === true)[0]
           .innerText.replace(/\(\d+\)/gi, "")
-          .trim()}`
+          .trim()}`,
       );
       let amount = createEl("div", displayElemStyle, `(${amountInput.value})`);
       let price = createEl("div", displayElemStyle, `${priceInput.value || 0}`);
@@ -283,7 +283,7 @@
       let delBtn = createEl(
         "div",
         `${displayElemStyle}; cursor: pointer;`,
-        "X"
+        "X",
       );
 
       delBtn.addEventListener("click", () => {
@@ -302,35 +302,40 @@
 
     let sendAllBtn = createEl("button", btnSendAllStyle, "SEND");
 
-    sendAllBtn.addEventListener("click", () => {
+    sendAllBtn.addEventListener("click", async () => {
       let conf = confirm("Send?");
       if (!conf) return;
-      elementsToSend.forEach((el, index) => {
-        function sendElements(formData) {
-          let http = new XMLHttpRequest();
-          http.open("POST", "/el_transfer.php", !0);
-          http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-          );
-          http.setRequestHeader(
-            "Content-Type",
-            "text/plain; charset=windows-1251"
-          );
-          http.send(formData);
-          http.onload = () => {
-            let children = document.getElementById("selectedElements").children;
-            let okay = createEl("div", "", "✔");
-            children[index].appendChild(okay);
-          };
-          http.onerror = () => {
-            let children = document.getElementById("selectedElements").children;
-            let error = createEl("div", "", "✘");
-            children[index].appendChild(error);
-          };
-        }
 
-        function sendFormData() {
+      for (let index = 0; index < elementsToSend.length; index++) {
+        const el = elementsToSend[index];
+
+        const sendElements = (formData) => {
+          return new Promise((resolve, reject) => {
+            let http = new XMLHttpRequest();
+            http.open("POST", "/el_transfer.php", !0);
+            http.setRequestHeader(
+              "Content-type",
+              "application/x-www-form-urlencoded",
+            );
+            http.setRequestHeader(
+              "Content-Type",
+              "text/plain; charset=windows-1251",
+            );
+            http.onload = () => {
+              if (http.status === 200) {
+                resolve(http);
+              } else {
+                reject(new Error(`Status: ${http.status}`));
+              }
+            };
+            http.onerror = () => {
+              reject(new Error("Network error"));
+            };
+            http.send(formData);
+          });
+        };
+
+        const sendFormData = () => {
           let form = new FormData();
           form.append("nick", el.nick);
           form.append("eltype", el.eltype);
@@ -342,10 +347,19 @@
           form.append("sign", el.sign);
           const data = [...form.entries()];
           return data.map((x) => `${x[0]}=${x[1]}`).join("&");
-        }
+        };
 
-        sendElements(getSendArray(sendFormData()));
-      });
+        try {
+          await sendElements(getSendArray(sendFormData()));
+          let children = document.getElementById("selectedElements").children;
+          let okay = createEl("div", "", "✔");
+          children[index].appendChild(okay);
+        } catch (err) {
+          let children = document.getElementById("selectedElements").children;
+          let error = createEl("div", "", "✘");
+          children[index].appendChild(error);
+        }
+      }
     });
 
     panel.appendChild(selectType);
@@ -366,15 +380,15 @@
     let table = document.getElementsByTagName("table")[1];
     let panel = createEl(
       "div",
-      "display: flex; flex-direction: column; width: 200px;"
+      "display: flex; flex-direction: column; width: 200px;",
     );
     let container = createEl(
       "div",
-      "position: absolute; display:flex; top: 133px;left: 37.5%; width: 700px; text-align: center;"
+      "position: absolute; display:flex; top: 133px;left: 37.5%; width: 700px; text-align: center;",
     );
     let selectedElements = createEl(
       "div",
-      "display: flex; flex-direction: column; width: 100%;"
+      "display: flex; flex-direction: column; width: 100%;",
     );
     selectedElements.id = "selectedElements";
     let nickInput = createEl("input", styleGray, "", "NICK", "text");
@@ -386,21 +400,21 @@
       styleGray,
       "",
       "MERCURY | РТУТЬ",
-      "text"
+      "text",
     );
     let sulphurInput = createEl(
       "input",
       styleGray,
       "",
       "SULPHUR | СЕРА",
-      "text"
+      "text",
     );
     let crystalInput = createEl(
       "input",
       styleGray,
       "",
       "CRYSTAL | КРИСТАЛЛ",
-      "text"
+      "text",
     );
     let gemInput = createEl("input", styleGray, "", "GEM | САМОЦВЕТ", "text");
     let textInput = createEl("input", styleGray, "", "TEXT", "text");
@@ -440,17 +454,17 @@
       let mercury = createEl(
         "div",
         displayElemStyle,
-        `${mercuryInput.value || 0}`
+        `${mercuryInput.value || 0}`,
       );
       let sulphur = createEl(
         "div",
         displayElemStyle,
-        `${sulphurInput.value || 0}`
+        `${sulphurInput.value || 0}`,
       );
       let crystal = createEl(
         "div",
         displayElemStyle,
-        `${crystalInput.value || 0}`
+        `${crystalInput.value || 0}`,
       );
       let gem = createEl("div", displayElemStyle, `${gemInput.value || 0}`);
       let text = createEl("div", displayElemStyle, `${textInput.value || ""}`);
@@ -473,7 +487,7 @@
       let delBtn = createEl(
         "div",
         `${displayElemStyle}; cursor: pointer;`,
-        "X"
+        "X",
       );
 
       delBtn.addEventListener("click", () => {
@@ -504,36 +518,41 @@
 
     let sendAllBtn = createEl("button", btnSendAllStyle, "SEND | ОТПРАВИТЬ");
 
-    sendAllBtn.addEventListener("click", (e) => {
+    sendAllBtn.addEventListener("click", async (e) => {
       e.preventDefault();
       let conf = confirm("Send?");
       if (!conf) return;
-      elementsToSend.forEach((el, index) => {
-        function sendResources(formData) {
-          let http = new XMLHttpRequest();
-          http.open("POST", "/transfer.php", !0);
-          http.setRequestHeader(
-            "Content-type",
-            "application/x-www-form-urlencoded"
-          );
-          http.setRequestHeader(
-            "Content-Type",
-            "text/plain; charset=windows-1251"
-          );
-          http.send(formData);
-          http.onload = () => {
-            let children = document.getElementById("selectedElements").children;
-            let okay = createEl("div", "", "✔");
-            children[index].appendChild(okay);
-          };
-          http.onerror = () => {
-            let children = document.getElementById("selectedElements").children;
-            let error = createEl("div", "", "✘");
-            children[index].appendChild(error);
-          };
-        }
 
-        function sendFormData() {
+      for (let index = 0; index < elementsToSend.length; index++) {
+        const el = elementsToSend[index];
+
+        const sendResources = (formData) => {
+          return new Promise((resolve, reject) => {
+            let http = new XMLHttpRequest();
+            http.open("POST", "/transfer.php", !0);
+            http.setRequestHeader(
+              "Content-type",
+              "application/x-www-form-urlencoded",
+            );
+            http.setRequestHeader(
+              "Content-Type",
+              "text/plain; charset=windows-1251",
+            );
+            http.onload = () => {
+              if (http.status === 200) {
+                resolve(http);
+              } else {
+                reject(new Error(`Status: ${http.status}`));
+              }
+            };
+            http.onerror = () => {
+              reject(new Error("Network error"));
+            };
+            http.send(formData);
+          });
+        };
+
+        const sendFormData = () => {
           let form = new FormData();
           form.append("nick", el.nick);
           form.append("gold", el.gold);
@@ -547,10 +566,19 @@
           form.append("sign", el.sign);
           const data = [...form.entries()];
           return data.map((x) => `${x[0]}=${x[1]}`).join("&");
-        }
+        };
 
-        sendResources(getSendArray(sendFormData()));
-      });
+        try {
+          await sendResources(getSendArray(sendFormData()));
+          let children = document.getElementById("selectedElements").children;
+          let okay = createEl("div", "", "✔");
+          children[index].appendChild(okay);
+        } catch (err) {
+          let children = document.getElementById("selectedElements").children;
+          let error = createEl("div", "", "✘");
+          children[index].appendChild(error);
+        }
+      }
     });
 
     panel.appendChild(nickInput);
