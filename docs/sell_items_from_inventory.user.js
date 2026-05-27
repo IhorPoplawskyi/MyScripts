@@ -12,7 +12,7 @@
 
   let myCode = localStorage.getItem("myCode");
 
-  let link = location.origin
+  let link = location.origin;
 
   let linkToMarket = "";
   let query = "&sort=204&type=0&snew=";
@@ -47,14 +47,14 @@
       priceBlock
         .getElementsByTagName("table")[3]
         .getElementsByTagName("td")[1]
-        .innerText.replace(",", "")
+        .innerText.replace(",", ""),
     );
     let strength = Number(
       priceBlock
         .getElementsByTagName("table")[1]
         .getElementsByTagName("td")[1]
         .innerText.match(/Прочность: .+/gi)[0]
-        .match(/\d+/gi)[0]
+        .match(/\d+/gi)[0],
     );
     let priceOneBattle = Math.round(price / strength);
 
@@ -69,13 +69,13 @@
     let mockedPrice;
     if (mockedCzb !== 0 && mockedPercent !== 0) {
       mockedPrice = Math.round(
-        myStrength * (mockedCzb * (mockedPercent / 100))
+        myStrength * (mockedCzb * (mockedPercent / 100)),
       );
     } else if (mockedCzb !== 0 && mockedPercent === 0) {
       mockedPrice = Math.round(mockedCzb * myStrength);
     } else if (mockedCzb === 0 && mockedPercent !== 0) {
       mockedPrice = Math.round(
-        priceOneBattle * myStrength * (mockedPercent / 100)
+        priceOneBattle * myStrength * (mockedPercent / 100),
       );
     }
     let isBothZero = mockedCzb === 0 && mockedPercent === 0;
@@ -121,22 +121,23 @@
 
   if (location.href === `${link}/inventory.php`) {
     const refreshTabs = () => {
-      let my_arts = [...document.getElementById("inventory_block").children];
-      my_arts = my_arts.filter(
-        (el) => !el.classList.contains("inventory_item_div_empty")
+      let arts = [...document.getElementById("inventory_block").children];
+      arts = arts.filter(
+        (el) => !el.classList.contains("inventory_item_div_empty"),
       );
-      my_arts.map((el) => {
-        let id = el.id.match(/\d{1,3}/);
-        let artInfo = arts[parseInt(id)];
+      arts.map((el) => {
         el.addEventListener("click", () => {
+          let menu = document.getElementById("inv_menu");
           let buttons = document.getElementById("inv_item_buttons");
+
+          if (buttons.lastChild.id === "sellBtn") buttons.lastChild.remove();
 
           const myWrapper = createEl("div", "display: flex");
           myWrapper.id = "myWrapper";
 
           const inputsWrapper = createEl(
             "div",
-            "display: flex; flex-direction: column; width: 55px"
+            "display: flex; flex-direction: column; width: 55px",
           );
           inputsWrapper.id = "inputsWrapper";
 
@@ -145,7 +146,7 @@
           czbInput.addEventListener("change", () => {
             czbInput.value == "" ? (czbInput.value = 0) : czbInput.value;
             JSON.stringify(
-              localStorage.setItem("mockedCzb", Number(czbInput.value))
+              localStorage.setItem("mockedCzb", Number(czbInput.value)),
             );
             mockedCzb = JSON.parse(localStorage.getItem("mockedCzb"));
             czbInput.value = mockedCzb;
@@ -158,7 +159,7 @@
               ? (percentInput.value = 0)
               : percentInput.value;
             JSON.stringify(
-              localStorage.setItem("mockedPercent", Number(percentInput.value))
+              localStorage.setItem("mockedPercent", Number(percentInput.value)),
             );
             mockedPercent = JSON.parse(localStorage.getItem("mockedPercent"));
             percentInput.value = mockedPercent;
@@ -168,7 +169,7 @@
           let sellBtn = createEl(
             "button",
             "border-radius: 100%; border: 2px solid #dbb681; background-color: rgba(105, 62, 15, 0.651)",
-            ""
+            "",
           );
           let sellBtnImg = createEl("img");
           sellBtn.id = "sellBtn";
@@ -180,11 +181,14 @@
           sellBtn.appendChild(sellBtnImg);
 
           let artInfoLink = document.getElementById(
-            "inv_item_select_info_a"
+            "inv_item_select_info_a",
           ).href;
           localStorage.setItem("artInfoLink", JSON.stringify(artInfoLink));
 
-          let artName = `${artInfo.name} ${artInfo.durability1}/${artInfo.durability2}`;
+          let artName =
+            document.getElementById("inv_menu_art_name").firstChild.innerText;
+          artName = artName.replace("[", "");
+          artName = artName.replace("]", "");
 
           sellBtn.addEventListener("click", () => {
             localStorage.setItem("artNameLS", JSON.stringify(artName));
@@ -212,9 +216,8 @@
     let options = [...select.options];
 
     let artName = JSON.parse(localStorage.getItem("artNameLS"));
-    select[
-      options.findIndex((el) => el.innerText.includes(artName))
-    ].selected = true;
+    select[options.findIndex((el) => el.innerText.includes(artName))].selected =
+      true;
 
     let amount = document.getElementById("anl_count");
     amount.value = "1";
@@ -227,36 +230,15 @@
 
   //Selling resources from anywhere;
 
-  let resources = [];
-  let wood;
-  let ore;
-  let mercury;
-  let sulphur;
-  let crystal;
-  let gem;
-
-  if (
-    document.getElementsByClassName("panel_res_link panel_res_link_add")
-      .length !== 0
-  ) {
-    resources = [
-      ...document.getElementsByClassName("panel_res_link panel_res_link_add"),
-    ];
-    wood = resources[2];
-    ore = resources[3];
-    mercury = resources[4];
-    sulphur = resources[5];
-    crystal = resources[6];
-    gem = resources[7];
-  } else {
-    resources = [...document.getElementsByClassName("sh_ResourcesItem")];
-    wood = resources[1];
-    ore = resources[2];
-    mercury = resources[3];
-    sulphur = resources[4];
-    crystal = resources[5];
-    gem = resources[6];
-  }
+  const resources = [...document.getElementsByClassName("sh_ResourcesItem")];
+  const [wood, ore, mercury, sulphur, crystal, gem] = [
+    resources[1],
+    resources[2],
+    resources[3],
+    resources[4],
+    resources[5],
+    resources[6],
+  ];
 
   const woodImg = wood.firstChild;
   const woodAmount = wood.lastChild.innerText;
@@ -299,12 +281,12 @@
       } else if (res.url.includes("msg_type=2")) {
         const dialog = createEl(
           "div",
-          "position: absolute; width: 450px; padding: 10px; border: 1px solid grey; height: 150px; display:flex; align-items: center; text-content: center; border-radius: 10px; background: white; left: 40%; top: 20%;"
+          "position: absolute; width: 450px; padding: 10px; border: 1px solid grey; height: 150px; display:flex; align-items: center; text-content: center; border-radius: 10px; background: white; left: 40%; top: 20%;",
         );
         const msg = createEl(
           "div",
           "font-size: 36px;",
-          "Something went wrong!"
+          "Something went wrong!",
         );
         dialog.appendChild(msg);
         document.body.appendChild(dialog);
@@ -325,49 +307,37 @@
   woodImg.addEventListener("click", () => {
     let count = +woodAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("wood", 182, count);
+    sellResource("wood", 181, count);
   });
 
   oreImg.addEventListener("click", () => {
     let count = +oreAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("ore", 182, count);
+    sellResource("ore", 181, count);
   });
 
   mercuryImg.addEventListener("click", () => {
     let count = +mercuryAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("mercury", 363, count);
+    sellResource("mercury", 362, count);
   });
 
   sulphurImg.addEventListener("click", () => {
     let count = +sulphurAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("sulphur", 363, count);
+    sellResource("sulphur", 362, count);
   });
 
   crystalImg.addEventListener("click", () => {
     let count = +crystalAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("crystal", 363, count);
+    sellResource("crystal", 362, count);
   });
 
   gemImg.addEventListener("click", () => {
     let count = +gemAmount;
     count < 50 ? (count = count) : (count = 50);
-    sellResource("gem", 363, count);
+    sellResource("gem", 362, count);
   });
 
-  // repair in 1 click
-  if (location.pathname.includes("art_transfer.php")) {
-    let input = [...document.getElementsByTagName("input")];
-    input = input.filter((el) => el.value == "5")[0];
-    input.click();
-    let btn100 = [...document.getElementsByTagName("b")];
-    btn100 = btn100.filter((b) => b.innerText === "100%")[0];
-    btn100.click();
-    let inputPlus1 = [...document.getElementsByTagName("input")];
-    inputPlus1 = inputPlus1.filter((el) => el.value === "+1%")[0];
-    inputPlus1.click();
-  }
 })();

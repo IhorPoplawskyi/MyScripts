@@ -139,7 +139,7 @@
       mid.appendChild(createEl("div", "color:green", `багато ${data.price}`));
       mid.appendChild(createEl("div", "", `оптислом 0/${data.str}`));
       mid.appendChild(createEl("div", "", `боїв: ${data.count}`));
-      mid.appendChild(createEl("div", "", `рем: ${data.repairs}`));
+      mid.appendChild(createEl("div", "", `ремонтів: ${data.repairs}`));
     });
   };
 
