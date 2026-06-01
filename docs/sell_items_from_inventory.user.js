@@ -186,7 +186,7 @@
           localStorage.setItem("artInfoLink", JSON.stringify(artInfoLink));
 
           let artName =
-            document.getElementById("inv_menu_art_name").firstChild.innerText;
+            document.getElementById("inv_menu_art_name").textContent;
           artName = artName.replace("[", "");
           artName = artName.replace("]", "");
 
@@ -230,114 +230,131 @@
 
   //Selling resources from anywhere;
 
-  const resources = [...document.getElementsByClassName("sh_ResourcesItem")];
-  const [wood, ore, mercury, sulphur, crystal, gem] = [
-    resources[1],
-    resources[2],
-    resources[3],
-    resources[4],
-    resources[5],
-    resources[6],
+let resources = [];
+let wood;
+let ore;
+let mercury;
+let sulphur;
+let crystal;
+let gem;
+
+if (
+  document.getElementsByClassName("panel_res_link panel_res_link_add")
+    .length !== 0
+) {
+  resources = [
+    ...document.getElementsByClassName("panel_res_link panel_res_link_add"),
   ];
+  wood = resources[2];
+  ore = resources[3];
+  mercury = resources[4];
+  sulphur = resources[5];
+  crystal = resources[6];
+  gem = resources[7];
+} else {
+  resources = [...document.getElementsByClassName("sh_ResourcesItem")];
+  wood = resources[1];
+  ore = resources[2];
+  mercury = resources[3];
+  sulphur = resources[4];
+  crystal = resources[5];
+  gem = resources[6];
+}
 
-  const woodImg = wood.firstChild;
-  const woodAmount = wood.lastChild.innerText;
+const woodImg = wood.firstChild;
+const woodAmount = wood.lastChild.innerText;
 
-  const oreImg = ore.firstChild;
-  const oreAmount = ore.lastChild.innerText;
+const oreImg = ore.firstChild;
+const oreAmount = ore.lastChild.innerText;
 
-  const mercuryImg = mercury.firstChild;
-  const mercuryAmount = mercury.lastChild.innerText;
+const mercuryImg = mercury.firstChild;
+const mercuryAmount = mercury.lastChild.innerText;
 
-  const sulphurImg = sulphur.firstChild;
-  const sulphurAmount = sulphur.lastChild.innerText;
+const sulphurImg = sulphur.firstChild;
+const sulphurAmount = sulphur.lastChild.innerText;
 
-  const crystalImg = crystal.firstChild;
-  const crystalAmount = crystal.lastChild.innerText;
+const crystalImg = crystal.firstChild;
+const crystalAmount = crystal.lastChild.innerText;
 
-  const gemImg = gem.firstChild;
-  const gemAmount = gem.lastChild.innerText;
+const gemImg = gem.firstChild;
+const gemAmount = gem.lastChild.innerText;
 
-  const sellResource = (resource, price, count) => {
-    let form = new FormData();
-    form.append("item", resource);
-    form.append("count", count);
-    form.append("atype", 1);
-    form.append("price", price);
-    form.append("duration", 8);
-    form.append("sign", myCode);
+const sellResource = (resource, price, count) => {
+  let form = new FormData();
+  form.append("item", resource);
+  form.append("count", count);
+  form.append("atype", 1);
+  form.append("price", price);
+  form.append("duration", 8);
+  form.append("sign", myCode);
 
-    fetch(`${link}/auction_accept_new_lot.php`, {
-      method: "POST",
-      headers: {
-        Accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-        "Cache-Control": "max-age=0",
-      },
-      body: form,
-    }).then((res) => {
-      if (res.url.includes("msg_type=1")) {
-        location.reload();
-      } else if (res.url.includes("msg_type=2")) {
-        const dialog = createEl(
-          "div",
-          "position: absolute; width: 450px; padding: 10px; border: 1px solid grey; height: 150px; display:flex; align-items: center; text-content: center; border-radius: 10px; background: white; left: 40%; top: 20%;",
-        );
-        const msg = createEl(
-          "div",
-          "font-size: 36px;",
-          "Something went wrong!",
-        );
-        dialog.appendChild(msg);
-        document.body.appendChild(dialog);
+  fetch(`${link}/auction_accept_new_lot.php`, {
+    method: "POST",
+    headers: {
+      Accept:
+        "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+      "Cache-Control": "max-age=0",
+    },
+    body: form,
+  }).then((res) => {
+    if (res.url.includes("msg_type=1")) {
+      location.reload();
+    } else if (res.url.includes("msg_type=2")) {
+      const dialog = createEl(
+        "div",
+        "position: absolute; width: 450px; padding: 10px; border: 1px solid grey; height: 150px; display:flex; align-items: center; text-content: center; border-radius: 10px; background: white; left: 40%; top: 20%;",
+      );
+      const msg = createEl("div", "font-size: 36px;", "Something went wrong!");
+      dialog.appendChild(msg);
+      document.body.appendChild(dialog);
 
-        const timeout = setTimeout(() => {
-          dialog.style.display = "none";
-        }, 2000);
-      }
-    });
-  };
-
-  const images = [woodImg, oreImg, mercuryImg, sulphurImg, crystalImg, gemImg];
-
-  images.forEach((img) => {
-    img.style.cursor = "pointer";
+      const timeout = setTimeout(() => {
+        dialog.style.display = "none";
+      }, 2000);
+    }
   });
+};
 
-  woodImg.addEventListener("click", () => {
-    let count = +woodAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("wood", 181, count);
-  });
+const images = [woodImg, oreImg, mercuryImg, sulphurImg, crystalImg, gemImg];
 
-  oreImg.addEventListener("click", () => {
-    let count = +oreAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("ore", 181, count);
-  });
+images.forEach((img) => {
+  img.style.cursor = "pointer";
+});
 
-  mercuryImg.addEventListener("click", () => {
-    let count = +mercuryAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("mercury", 362, count);
-  });
+woodImg.addEventListener("click", () => {
+  let count = +woodAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("wood", 182, count);
+});
 
-  sulphurImg.addEventListener("click", () => {
-    let count = +sulphurAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("sulphur", 362, count);
-  });
+oreImg.addEventListener("click", () => {
+  let count = +oreAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("ore", 182, count);
+});
 
-  crystalImg.addEventListener("click", () => {
-    let count = +crystalAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("crystal", 362, count);
-  });
+mercuryImg.addEventListener("click", () => {
+  let count = +mercuryAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("mercury", 363, count);
+});
 
-  gemImg.addEventListener("click", () => {
-    let count = +gemAmount;
-    count < 50 ? (count = count) : (count = 50);
-    sellResource("gem", 362, count);
-  });
+sulphurImg.addEventListener("click", () => {
+  let count = +sulphurAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("sulphur", 363, count);
+});
+
+crystalImg.addEventListener("click", () => {
+  let count = +crystalAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("crystal", 363, count);
+});
+
+gemImg.addEventListener("click", () => {
+  let count = +gemAmount;
+  count < 50 ? (count = count) : (count = 50);
+  sellResource("gem", 363, count);
+});
 
 })();
