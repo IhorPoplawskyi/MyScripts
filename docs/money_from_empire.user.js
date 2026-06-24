@@ -1,10 +1,43 @@
 (() => {
   const link = location.href;
 
-  const last_page = Number(
-    document.getElementsByClassName("hwm_pagination global_inside_shadow")[0]
-      .lastElementChild.innerText,
-  );
+  function getLastPage() {
+    return new Promise((resolve) => {
+      let xhr = new XMLHttpRequest();
+
+      xhr.open("get", `${link}&page=100500`);
+
+      xhr.setRequestHeader("Content-type", "text/html; charset=windows-1251");
+      xhr.overrideMimeType("text/html; charset=windows-1251");
+
+      xhr.onload = () => {
+        let doc = new DOMParser().parseFromString(
+          xhr.responseText,
+          "text/html",
+        );
+
+        let pagination = doc.getElementsByClassName(
+          "hwm_pagination global_inside_shadow",
+        )[0];
+
+        if (!pagination) {
+          console.error("Не знайдена пагінація");
+          resolve(1);
+          return;
+        }
+
+        let lastPage = Number(pagination.lastElementChild.innerText);
+
+        resolve(lastPage);
+      };
+
+      xhr.onerror = () => resolve(1);
+
+      xhr.send();
+    });
+  }
+
+  let last_page = 0;
 
   let all = [];
   let completed = 0;
@@ -268,12 +301,18 @@ border-radius:8px;
 
 `;
 
-  btn.onclick = () => {
+  btn.onclick = async () => {
     if (started) return;
 
     started = true;
 
-    btn.innerText = "⏳ Збираю...";
+    btn.innerText = "🔍 Шукаю останню сторінку...";
+
+    last_page = await getLastPage();
+
+    console.log("Остання сторінка:", last_page);
+
+    btn.innerText = `⏳ Збираю ${last_page} сторінок...`;
 
     for (let i = 0; i < last_page; i++) {
       fetchPage(i);
