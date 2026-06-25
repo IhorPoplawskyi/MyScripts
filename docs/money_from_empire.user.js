@@ -286,159 +286,243 @@ border-radius:8px;
   document.body.appendChild(btn);
 } else if (location.pathname.includes('/sms.php')) {
   if (document.getElementById("lordswm_tournament_btn")) {
-    alert("Скрипт вже запущений");
-    return;
-  }
-
-  const BASE = location.origin;
-  const BY_PL_ID = 2;
-
-  let all = [];
-  let running = false;
-
-  function request(url) {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-
-      xhr.open("GET", url);
-
-      xhr.overrideMimeType("text/html; charset=windows-1251");
-
-      xhr.onload = () => resolve(xhr.responseText);
-
-      xhr.onerror = reject;
-
-      xhr.send();
-    });
-  }
-
-  async function getLastPage() {
-    const html = await request(
-      `${BASE}/sms.php?by_pl_id=${BY_PL_ID}&page=9999`,
-    );
-
-    const doc = new DOMParser().parseFromString(html, "text/html");
-
-    const pag = doc.querySelector(".hwm_pagination.global_inside_shadow");
-
-    if (!pag) return 1;
-
-    const nums = [...pag.querySelectorAll("*")]
-      .map((x) => parseInt(x.textContent.trim()))
-      .filter((x) => !isNaN(x));
-
-    return Math.max(...nums, 1);
-  }
-
-  async function getMessageIds(page) {
-    const html = await request(
-      `${BASE}/sms.php?by_pl_id=${BY_PL_ID}&page=${page}`,
-    );
-
-    const doc = new DOMParser().parseFromString(html, "text/html");
-
-    const ids = [];
-
-    doc.querySelectorAll('a[href*="sms.php?sms_id="]').forEach((a) => {
-      const subject = a.textContent.trim();
-
-      if (!subject.toLowerCase().includes("турнир")) {
+        alert("Скрипт вже запущений");
         return;
-      }
-
-      const href = a.getAttribute("href");
-
-      const match = href.match(/sms_id=(\d+)/);
-
-      if (!match) return;
-
-      ids.push(match[1]);
-    });
-
-    return ids;
-  }
-
-  function detectType(text) {
-    const t = text.toLowerCase();
-
-    if (t.includes("тактический турнир лидеров")) {
-      return "Тактический Турнир Лидеров";
     }
 
-    if (t.includes("турнир лидеров")) {
-      return "Турнир Лидеров";
+    const BASE = location.origin;
+    const BY_PL_ID = 2;
+
+    let all = [];
+    let running = false;
+
+    function request(url) {
+        return new Promise((resolve, reject) => {
+
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("GET", url);
+
+            xhr.overrideMimeType(
+                "text/html; charset=windows-1251"
+            );
+
+            xhr.onload = () => resolve(xhr.responseText);
+
+            xhr.onerror = reject;
+
+            xhr.send();
+        });
     }
 
-    const m = text.match(/Турнир\s+"([^"]+)"/i);
+    async function getLastPage() {
+      const html = await request(
+        `${BASE}/sms.php?by_pl_id=${BY_PL_ID}&page=100500`,
+      );
 
-    if (m) return m[1];
+      const doc = new DOMParser().parseFromString(html, "text/html");
 
-    return "Інший турнір";
-  }
+      let maxPage = 1;
 
-  async function parseMessage(id) {
-    const html = await request(
-      `${BASE}/sms.php?sms_id=${id}&by_pl_id=${BY_PL_ID}`,
-    );
+      doc.querySelectorAll('a[href*="sms.php?page="]').forEach((a) => {
+        const href = a.getAttribute("href") || "";
 
-    const doc = new DOMParser().parseFromString(html, "text/html");
+        // тільки пагінація пошти
+        if (!href.includes("by_pl_id=2")) return;
 
-    const text = doc.body.innerText.replace(/\s+/g, " ").trim();
+        const match = href.match(/page=(\d+)/);
 
-    const gold = Number(
-      (text.match(/золото:\s*([\d,]+)/i)?.[1] || "0").replace(/,/g, ""),
-    );
+        if (!match) return;
 
-    const gl = Number(text.match(/очки\s+ГЛ:\s*(\d+)/i)?.[1] || 0);
+        const page = Number(match[1]) + 1;
 
-    const gt = Number(text.match(/очки\s+ГТ:\s*(\d+)/i)?.[1] || 0);
+        maxPage = Math.max(maxPage, page);
+      });
 
-    const art = Number(
-      text.match(/части\s+Имперского\s+артефакта:\s*(\d+)/i)?.[1] || 0,
-    );
+      console.log("Знайдено сторінок:", maxPage);
 
-    return {
-      id,
-      type: detectType(text),
-      gold,
-      gl,
-      gt,
-      art,
-    };
-  }
+      return maxPage;
+    }
 
-  function showResult() {
-    let old = document.getElementById("lordswm_tournament_box");
+    async function getMessageIds(page) {
 
-    if (old) old.remove();
+        const html = await request(
+            `${BASE}/sms.php?by_pl_id=${BY_PL_ID}&page=${page}`
+        );
 
-    const totalGold = all.reduce((s, x) => s + x.gold, 0);
+        const doc =
+            new DOMParser().parseFromString(
+                html,
+                "text/html"
+            );
 
-    const groups = {};
+        const ids = [];
 
-    all.forEach((x) => {
-      if (!groups[x.type]) {
-        groups[x.type] = {
-          count: 0,
-          gold: 0,
-          gl: 0,
-          gt: 0,
-          art: 0,
+        doc.querySelectorAll(
+            'a[href*="sms.php?sms_id="]'
+        ).forEach(a => {
+
+            const subject =
+                a.textContent.trim();
+
+            if (
+                !subject.toLowerCase()
+                    .includes("турнир")
+            ) {
+                return;
+            }
+
+            const href =
+                a.getAttribute("href");
+
+            const match =
+                href.match(
+                    /sms_id=(\d+)/
+                );
+
+            if (!match)
+                return;
+
+            ids.push(match[1]);
+        });
+
+        return ids;
+    }
+
+    function detectType(text) {
+
+        const t =
+            text.toLowerCase();
+
+        if (
+            t.includes(
+                "тактический турнир лидеров"
+            )
+        ) {
+            return "Тактический Турнир Лидеров";
+        }
+
+        if (
+            t.includes(
+                "турнир лидеров"
+            )
+        ) {
+            return "Турнир Лидеров";
+        }
+
+        const m =
+            text.match(
+                /Турнир\s+"([^"]+)"/i
+            );
+
+        if (m)
+            return m[1];
+
+        return "Інший турнір";
+    }
+
+    async function parseMessage(id) {
+
+        const html = await request(
+            `${BASE}/sms.php?sms_id=${id}&by_pl_id=${BY_PL_ID}`
+        );
+
+        const doc =
+            new DOMParser().parseFromString(
+                html,
+                "text/html"
+            );
+
+        const text =
+            doc.body.innerText
+                .replace(/\s+/g, " ")
+                .trim();
+
+        const gold =
+            Number(
+                (
+                    text.match(
+                        /золото:\s*([\d,]+)/i
+                    )?.[1] || "0"
+                ).replace(/,/g, "")
+            );
+
+        const gl =
+            Number(
+                text.match(
+                    /очки\s+ГЛ:\s*(\d+)/i
+                )?.[1] || 0
+            );
+
+        const gt =
+            Number(
+                text.match(
+                    /очки\s+ГТ:\s*(\d+)/i
+                )?.[1] || 0
+            );
+
+        const art =
+            Number(
+                text.match(
+                    /части\s+Имперского\s+артефакта:\s*(\d+)/i
+                )?.[1] || 0
+            );
+
+        return {
+            id,
+            type: detectType(text),
+            gold,
+            gl,
+            gt,
+            art
         };
-      }
+    }
 
-      groups[x.type].count++;
-      groups[x.type].gold += x.gold;
-      groups[x.type].gl += x.gl;
-      groups[x.type].gt += x.gt;
-      groups[x.type].art += x.art;
-    });
+    function showResult() {
 
-    const box = document.createElement("div");
+        let old =
+            document.getElementById(
+                "lordswm_tournament_box"
+            );
 
-    box.id = "lordswm_tournament_box";
+        if (old)
+            old.remove();
 
-    box.style.cssText = `
+        const totalGold =
+            all.reduce(
+                (s, x) => s + x.gold,
+                0
+            );
+
+        const groups = {};
+
+        all.forEach(x => {
+
+            if (!groups[x.type]) {
+
+                groups[x.type] = {
+                    count: 0,
+                    gold: 0,
+                    gl: 0,
+                    gt: 0,
+                    art: 0
+                };
+            }
+
+            groups[x.type].count++;
+            groups[x.type].gold += x.gold;
+            groups[x.type].gl += x.gl;
+            groups[x.type].gt += x.gt;
+            groups[x.type].art += x.art;
+        });
+
+        const box =
+            document.createElement("div");
+
+        box.id =
+            "lordswm_tournament_box";
+
+        box.style.cssText = `
 position:fixed;
 right:20px;
 bottom:70px;
@@ -455,7 +539,7 @@ font-size:14px;
 box-shadow:0 0 20px rgba(0,0,0,.5);
 `;
 
-    let html = `
+        let html = `
 <h2>🏆 Турнірна статистика</h2>
 
 <div style="font-size:20px;margin-bottom:10px">
@@ -471,10 +555,15 @@ box-shadow:0 0 20px rgba(0,0,0,.5);
 <hr>
 `;
 
-    Object.entries(groups)
-      .sort((a, b) => b[1].gold - a[1].gold)
-      .forEach(([name, v]) => {
-        html += `
+        Object.entries(groups)
+            .sort(
+                (a, b) =>
+                    b[1].gold -
+                    a[1].gold
+            )
+            .forEach(([name, v]) => {
+
+                html += `
 <div style="
 border:1px solid #444;
 padding:10px;
@@ -500,19 +589,24 @@ margin-bottom:10px;
 
 </div>
 `;
-      });
+            });
 
-    html += `
+        html += `
 <hr>
 
 <h3>Останні турніри</h3>
 `;
 
-    [...all]
-      .sort((a, b) => Number(b.id) - Number(a.id))
-      .slice(0, 50)
-      .forEach((x) => {
-        html += `
+        [...all]
+            .sort(
+                (a, b) =>
+                    Number(b.id) -
+                    Number(a.id)
+            )
+            .slice(0, 50)
+            .forEach(x => {
+
+                html += `
 <div style="margin-bottom:4px;">
 ${x.type}
  —
@@ -520,35 +614,51 @@ ${x.type}
  золота
 </div>
 `;
-      });
+            });
 
-    box.innerHTML = html;
+        box.innerHTML = html;
 
-    document.body.appendChild(box);
+        document.body.appendChild(box);
 
-    btn.disabled = false;
-    btn.innerText = "📊 Статистика";
-
-    btn.onclick = () => {
-      if (box.style.display === "none") {
-        box.style.display = "block";
-
-        btn.innerText = "❌ Сховати";
-      } else {
-        box.style.display = "none";
-
+        btn.disabled = false;
         btn.innerText = "📊 Статистика";
-      }
-    };
-  }
 
-  const btn = document.createElement("button");
+        btn.onclick = () => {
 
-  btn.id = "lordswm_tournament_btn";
+            if (
+                box.style.display ===
+                "none"
+            ) {
 
-  btn.innerText = "▶️ Турнірна статистика";
+                box.style.display =
+                    "block";
 
-  btn.style.cssText = `
+                btn.innerText =
+                    "❌ Сховати";
+
+            } else {
+
+                box.style.display =
+                    "none";
+
+                btn.innerText =
+                    "📊 Статистика";
+            }
+        };
+    }
+
+    const btn =
+        document.createElement(
+            "button"
+        );
+
+    btn.id =
+        "lordswm_tournament_btn";
+
+    btn.innerText =
+        "▶️ Турнірна статистика";
+
+    btn.style.cssText = `
 position:fixed;
 right:20px;
 bottom:20px;
@@ -562,48 +672,75 @@ border:1px solid #666;
 font-size:14px;
 `;
 
-  document.body.appendChild(btn);
+    document.body.appendChild(btn);
 
-  btn.onclick = async () => {
-    if (running) return;
+    btn.onclick = async () => {
 
-    running = true;
+        if (running)
+            return;
 
-    all = [];
+        running = true;
 
-    try {
-      btn.innerText = "🔍 Сторінки...";
+        all = [];
 
-      const lastPage = await getLastPage();
+        try {
 
-      const ids = [];
+            btn.innerText =
+                "🔍 Сторінки...";
 
-      for (let page = 0; page < lastPage; page++) {
-        btn.innerText = `📄 ${page + 1}/${lastPage}`;
+            const lastPage =
+                await getLastPage();
 
-        const found = await getMessageIds(page);
+            const ids = [];
 
-        ids.push(...found);
-      }
+            for (
+                let page = 0;
+                page < lastPage;
+                page++
+            ) {
 
-      const uniqueIds = [...new Set(ids)];
+                btn.innerText =
+                    `📄 ${page + 1}/${lastPage}`;
 
-      for (let i = 0; i < uniqueIds.length; i++) {
-        btn.innerText = `📨 ${i + 1}/${uniqueIds.length}`;
+                const found =
+                    await getMessageIds(
+                        page
+                    );
 
-        const data = await parseMessage(uniqueIds[i]);
+                ids.push(...found);
+            }
 
-        all.push(data);
-      }
+            const uniqueIds =
+                [...new Set(ids)];
 
-      showResult();
-    } catch (e) {
-      console.error(e);
+            for (
+                let i = 0;
+                i < uniqueIds.length;
+                i++
+            ) {
 
-      btn.innerText = "❌ Помилка";
-    }
+                btn.innerText =
+                    `📨 ${i + 1}/${uniqueIds.length}`;
 
-    running = false;
-  };
+                const data =
+                    await parseMessage(
+                        uniqueIds[i]
+                    );
+
+                all.push(data);
+            }
+
+            showResult();
+
+        } catch (e) {
+
+            console.error(e);
+
+            btn.innerText =
+                "❌ Помилка";
+        }
+
+        running = false;
+    };
 }
 })();
