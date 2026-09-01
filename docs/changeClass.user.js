@@ -48,6 +48,14 @@
       localStorage.setItem("myId", currentId);
     }
 
+    //temporary fix for Leader guild script;
+    let my_sign = localStorage.getItem("my_sign");
+    if (my_sign !== myCode) {
+      localStorage.setItem("my_sign", myCode);
+    }
+    ////////////////////////////////////////
+
+    
     let newInterface = document.getElementsByClassName("home_pers_block")[0];
 
     let oldInterface = [...document.getElementsByTagName("b")];
