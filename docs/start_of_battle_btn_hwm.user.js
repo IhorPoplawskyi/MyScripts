@@ -24,6 +24,7 @@
     var links = [...global_elem.getElementsByTagName("a")];
     links = links.filter((el) => !el.classList.contains("pi"));
     links = links.map((link) => link.href);
+    links = links.filter((link) => link.includes("warid="));
     //links = links.filter((link) => link.includes("warlog.php"));
     links = links.map((link) => link.split("?"));
     links.map((link) => link.splice(1, 0, queryParam));
