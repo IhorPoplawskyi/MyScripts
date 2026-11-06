@@ -10,8 +10,41 @@
     return element;
   };
 
-  const myCode = localStorage.getItem("myCode");
   const link = location.origin;
+
+  let myCode = localStorage.getItem("myCode");
+  let currentId = document.cookie.match(/pl_id=\d*/gi).join("");
+  let myId = localStorage.getItem("myId");
+  
+  if (!myId) {
+    localStorage.setItem("myId", currentId);
+    location.reload();
+  }
+
+  let fetchCode = async () => {
+    fetch(`${link}/castle.php?show_castle_f=1`)
+      .then(function (response) {
+        return response.text();
+      })
+      .then(function (html) {
+        var parser = new DOMParser();
+        var doc = parser.parseFromString(html, "text/html");
+        var element = doc
+          .getElementsByClassName("castle_yes_no_buttons")[0]
+          .getElementsByTagName("a")[0].href;
+        var code = element.slice(-32);
+        var plId = document.cookie.match(/pl_id=\d*/gi);
+        localStorage.setItem("myCode", code);
+      })
+      .catch(function (err) {});
+  };
+
+  if (!myCode) fetchCode();
+
+  if (myId !== currentId) {
+    fetchCode();
+    localStorage.setItem("myId", currentId);
+  }
 
   let linkToMarket = "";
   const query = "&sort=204&type=0&snew=";
