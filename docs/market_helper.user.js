@@ -180,12 +180,11 @@
     } else {
       let res = await fetch(artInfoLink);
       let text = await res.text();
-      repair = Number(
-        text
-          .match(/<td>\d+,?\d+<\/td>/gi)[0]
-          .match(/\d+,?\d+/)[0]
-          .replace(",", ""),
+      const repairMatch = text.match(
+        /(?:Стоимость ремонта|Repairing cost):<\/b>\s*<table[\s\S]*?<td>\s*([\d\s,]+)\s*<\/td>/i,
       );
+
+      repair = repairMatch ? Number(repairMatch[1].replace(/[^\d]/g, "")) : 0;
       artsRepairPrices[artType] = repair;
       localStorage.setItem(
         "artsRepairPricesLS",
