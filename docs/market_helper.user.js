@@ -169,7 +169,7 @@
     });
   };
 
-  const REPAIR_CACHE_VERSION = 2;
+  const REPAIR_CACHE_VERSION = 3;
 
   const savedRepairCacheVersion = Number(
     localStorage.getItem("artsRepairPricesVersion") || 0,
@@ -199,7 +199,7 @@
       let text = await res.text();
       const repairMatches = [
         ...text.matchAll(
-          /<img\b[^>]*src=['"][^'"]*\/i\/r\/gold\.png[^'"]*['"][^>]*>\s*<\/td>\s*<td[^>]*>\s*([\d,.\s]+)\s*<\/td>/gi,
+          /<img\b[^>]*src=['"][^'"]*\/i\/r\/(?:\d+\/)?gold\.png[^'"]*['"][^>]*>\s*<\/td>\s*<td[^>]*>\s*([\d,.\s]+)\s*<\/td>/gi,
         ),
       ];
 
@@ -208,6 +208,7 @@
             repairMatches[repairMatches.length - 1][1].replace(/[^\d]/g, ""),
           )
         : 0;
+
       artsRepairPrices[artType] = repair;
       localStorage.setItem(
         "artsRepairPricesLS",
