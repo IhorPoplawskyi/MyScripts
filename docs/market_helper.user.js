@@ -169,6 +169,23 @@
     });
   };
 
+  const REPAIR_CACHE_VERSION = 2;
+
+  const savedRepairCacheVersion = Number(
+    localStorage.getItem("artsRepairPricesVersion") || 0,
+  );
+
+  if (savedRepairCacheVersion < REPAIR_CACHE_VERSION) {
+    localStorage.removeItem("artsRepairPricesLS");
+
+    localStorage.setItem(
+      "artsRepairPricesVersion",
+      String(REPAIR_CACHE_VERSION),
+    );
+
+    artsRepairPrices = {};
+  }
+
   // --- Fetch repair prices & init
   const fetchMy = async () => {
     const url = new URL(location.href);
@@ -180,11 +197,17 @@
     } else {
       let res = await fetch(artInfoLink);
       let text = await res.text();
-      const repairMatch = text.match(
-        /(?:Стоимость ремонта|Repairing cost):<\/b>\s*<table[\s\S]*?<td>\s*([\d\s,]+)\s*<\/td>/i,
-      );
+      const repairMatches = [
+        ...text.matchAll(
+          /<img\b[^>]*src=['"][^'"]*\/i\/r\/gold\.png[^'"]*['"][^>]*>\s*<\/td>\s*<td[^>]*>\s*([\d,.\s]+)\s*<\/td>/gi,
+        ),
+      ];
 
-      repair = repairMatch ? Number(repairMatch[1].replace(/[^\d]/g, "")) : 0;
+      repair = repairMatches.length
+        ? Number(
+            repairMatches[repairMatches.length - 1][1].replace(/[^\d]/g, ""),
+          )
+        : 0;
       artsRepairPrices[artType] = repair;
       localStorage.setItem(
         "artsRepairPricesLS",
